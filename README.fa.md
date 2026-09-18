@@ -15,6 +15,14 @@
 
 یک استودیوی مستقل، سریع، مدرن و شیک تحت وب (طراحی تیره و گلس‌مورفیک) برای مدیریت متادیتا، شناسایی خودکار آهنگ‌ها با شزم، جستجوی هم‌زمان در چند مرجع آنلاین، دریافت لیریکس هماهنگ‌شده (Synced LRC)، پخش زنده و سازمان‌دهی فایل‌های صوتی و ویدیوها.
 
+<p align="center">
+  <img src="docs/images/preview-main.webp" alt="محیط اصلی متاتیون استودیو" width="100%">
+</p>
+
+<p align="center">
+  <img src="docs/images/preview-modal.webp" alt="پنجره جستجو و انتخاب متادیتای متاتیون استودیو" width="90%">
+</p>
+
 ---
 
 ## ✨ ویژگی‌های برجسته
@@ -54,15 +62,15 @@ chmod +x start.sh
 ./start.sh
 ```
 
-همچنین می‌توانید دستورات را به صورت مستقیم و بدون منو اجرا کنید:
+اسکریپت به صورت خودکار در صورت نیاز محیط مجازی `.venv` و وابستگی‌ها را نصب کرده، سرور را اجرا و مرورگر شما را باز می‌کند.
+
+گزینه‌ها و دستورات اختیاری:
 ```bash
-./start.sh start           # اجرای مستقیم در کنسول روی پورت پیش‌فرض 7860
-./start.sh start 8080      # اجرا روی پورت دلخواه
-./start.sh start-bg        # اجرای سرویس در پس‌زمینه (Background Daemon)
-./start.sh stop            # توقف سرویس پس‌زمینه
-./start.sh status          # مشاهده وضعیت فعال بودن سرور
-./start.sh check           # پایش سلامت سیستم، پایتون و وابستگی‌ها
-./start.sh enable-startup  # فعال‌سازی اجرای خودکار هنگام ورود به سیستم (Autostart)
+./start.sh 8080            # اجرا روی پورت دلخواه (پیش‌فرض: 7860)
+./start.sh --no-browser    # اجرا بدون باز کردن خودکار مرورگر
+./start.sh install         # نصب و پیکربندی اولیه محیط و وابستگی‌ها
+./start.sh update          # بروزرسانی بسته‌ها به آخرین نسخه
+./start.sh check           # بررسی سلامت سیستم، ابزارهای ffmpeg و پایتون
 ```
 
 ### 🪟 ویندوز (Windows PowerShell)
@@ -71,14 +79,13 @@ chmod +x start.sh
 .\start.ps1
 ```
 
-یا با پارامترهای خط فرمان:
+پارامترهای اختیاری:
 ```powershell
-.\start.ps1 -Action start -Port 7860
-.\start.ps1 -Action start-bg
-.\start.ps1 -Action stop
-.\start.ps1 -Action status
+.\start.ps1 -Port 8080
+.\start.ps1 -NoBrowser
+.\start.ps1 -Action install
+.\start.ps1 -Action update
 .\start.ps1 -Action check
-.\start.ps1 -Action enable-startup
 ```
 
 ---

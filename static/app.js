@@ -837,7 +837,7 @@ async function scanDirectory(path) {
       elements.inspectorContent.classList.add("hidden");
     }
   } catch (err) {
-    showToast("Network error connecting to Auto-Tagger server", "error");
+    showToast("Network error connecting to Metatune server", "error");
     elements.statText.textContent = "Offline";
   }
 }

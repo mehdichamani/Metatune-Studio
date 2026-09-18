@@ -160,9 +160,32 @@ body {
   box-shadow: 0 0 0 3px var(--accent-glow);
 }
 
-.nav-stats {
+.nav-actions {
   display: flex;
   align-items: center;
+  gap: 12px;
+}
+
+.nav-github-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--bg-card-border);
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.nav-github-link:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
 }
 
 .stat-pill {

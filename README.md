@@ -15,6 +15,14 @@
 
 A self-contained, lightning-fast, and sleek web-based studio (Dark Glassmorphic UI) for audio and music video metadata tagging, automatic song recognition (Shazam), online multi-source search, synced lyrics fetching, audio playback, and batch file organization.
 
+<p align="center">
+  <img src="docs/images/preview-main.webp" alt="Metatune Studio - Main Interface" width="100%">
+</p>
+
+<p align="center">
+  <img src="docs/images/preview-modal.webp" alt="Metatune Studio - Search & Tagging Preview" width="90%">
+</p>
+
 ---
 
 ## ✨ Features
@@ -54,15 +62,15 @@ chmod +x start.sh
 ./start.sh
 ```
 
-Or pass direct subcommands:
+The script automatically prepares the `.venv` virtual environment and dependencies if needed, starts the server, and opens your browser.
+
+Optional flags & utilities:
 ```bash
-./start.sh start           # Start interactive foreground server on port 7860
-./start.sh start 8080      # Run on custom port
-./start.sh start-bg        # Run as background daemon process
-./start.sh stop            # Stop background process
-./start.sh status          # Check running status
-./start.sh check           # Run system health check
-./start.sh enable-startup  # Enable autostart with desktop login
+./start.sh 8080            # Run on custom port (default: 7860)
+./start.sh --no-browser    # Run without opening browser automatically
+./start.sh install         # Explicitly setup virtualenv & install dependencies
+./start.sh update          # Update dependencies to latest versions
+./start.sh check           # System health check (Python, FFmpeg, tools)
 ```
 
 ### 🪟 Windows (PowerShell)
@@ -71,14 +79,13 @@ Or pass direct subcommands:
 .\start.ps1
 ```
 
-Or run via arguments:
+Optional parameters:
 ```powershell
-.\start.ps1 -Action start -Port 7860
-.\start.ps1 -Action start-bg
-.\start.ps1 -Action stop
-.\start.ps1 -Action status
+.\start.ps1 -Port 8080
+.\start.ps1 -NoBrowser
+.\start.ps1 -Action install
+.\start.ps1 -Action update
 .\start.ps1 -Action check
-.\start.ps1 -Action enable-startup
 ```
 
 ---
