@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Music Auto-Tagger Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Top Navigation Bar -->
+    <header class="navbar">
+      <div class="brand">
+        <div class="brand-logo">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 18V5l12-2v13"></path>
+            <circle cx="6" cy="18" r="3"></circle>
+            <circle cx="18" cy="16" r="3"></circle>
+          </svg>
+        </div>
+        <div class="brand-title">
+          <span class="brand-name">Auto-Tagger</span>
+          <span class="brand-badge">STUDIO</span>
+        </div>
+      </div>
+
+      <!-- Directory Path Input Bar -->
+      <div class="dir-bar">
+        <div class="dir-input-wrapper">
+          <svg class="dir-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+          </svg>
+          <input type="text" id="dirPathInput" placeholder="Directory path (e.g. ~/Music or .)" spellcheck="false">
+        </div>
+        <button id="scanBtn" class="btn btn-primary">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+          </svg>
+          <span>Scan Folder</span>
+        </button>
+      </div>
+
+      <div class="nav-stats">
+        <div class="stat-pill" id="statPill">
+          <span class="stat-dot"></span>
+          <span id="statText">0 tracks</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Workspace Layout -->
+    <main class="workspace">
+      <!-- Left Sidebar: Track Queue -->
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <h3>Queue</h3>
+          <div class="filter-box">
+            <input type="text" id="filterInput" placeholder="Filter files...">
+          </div>
+        </div>
+
+        <div class="track-list" id="trackList">
+          <div class="empty-state">
+            <p>No audio files loaded.</p>
+            <span>Scan a directory above to start</span>
+          </div>
+        </div>
+
+        <div class="sidebar-footer">
+          <button id="skipAllBtn" class="btn btn-ghost btn-sm" title="Skip to next untagged file">Skip to Untagged</button>
+          <button id="openBatchModalBtn" class="btn btn-primary-gradient btn-sm" title="Batch Auto-Tagging & Recognition Studio">
+            ⚡ Batch Studio
+          </button>
+        </div>
+      </aside>
+
+      <!-- Center & Right: Track Inspector & Metadata Fetcher -->
+      <section class="inspector-area">
+        <div id="inspectorContent" class="inspector-content hidden">
+          
+          <!-- Top Standalone Player Card -->
+          <div class="player-top-card">
+            <audio id="audioPlayer" controls preload="none"></audio>
+            <!-- Single Inspector View Mode Switcher -->
+            <div class="inspector-mode-tabs">
+              <button id="quickModeTabBtn" class="mode-tab-btn active" data-mode="quick">
+                <span class="tab-icon">⚡</span>
+                <span class="tab-title">Quick Mode</span>
+              </button>
+              <button id="advancedModeTabBtn" class="mode-tab-btn" data-mode="advanced">
+                <span class="tab-icon">🛠</span>
+                <span class="tab-title">Advanced Mode</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- ================= QUICK MODE VIEW ================= -->
+          <div id="quickModeView" class="quick-mode-container">
+            <!-- Quick Engine Selection Toolbar -->
+            <div class="quick-toolbar">
+              <div class="quick-engine-group">
+                <span class="quick-engine-label">Search Engine:</span>
+                <div class="quick-engine-chips" id="quickEngineChips">
+                  <button type="button" class="quick-chip active" data-engine="itunes" title="Press 'A' or '1' to search Apple Music (Default)">
+                    <kbd class="chip-key">A</kbd>
+                    <span>🍎 Apple Music</span>
+                  </button>
+                  <button type="button" class="quick-chip" data-engine="shazam" title="Press 'S' or '2' to recognize with Shazam">
+                    <kbd class="chip-key">S</kbd>
+                    <span>⚡ Shazam</span>
+                  </button>
+                  <button type="button" class="quick-chip" data-engine="deezer" title="Press 'D' or '3' to search Deezer">
+                    <kbd class="chip-key">D</kbd>
+                    <span>🎵 Deezer</span>
+                  </button>
+                  <button type="button" class="quick-chip" data-engine="musicbrainz" title="Press 'F' or '4' to search MusicBrainz">
+                    <kbd class="chip-key">F</kbd>
+                    <span>🧠 MusicBrainz</span>
+                  </button>
+                  <button type="button" class="quick-chip" data-engine="all" title="Press 'W' or '5' to search all sources">
+                    <kbd class="chip-key">W</kbd>
+                    <span>🌐 All Sources</span>
+                  </button>
+                </div>
+              </div>
+
+              <div class="quick-toolbar-right">
+                <span id="quickStatusBadge" class="quick-status-badge idle">Ready</span>
+                <button id="quickReFetchBtn" class="btn btn-secondary btn-sm" title="Re-Search Current Engine (R)">
+                  <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="23 4 23 10 17 10"></polyline>
+                    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                  </svg>
+                  <span>Re-Search</span>
+                  <kbd class="chip-key-inline">R</kbd>
+                </button>
+              </div>
+            </div>
+
+            <!-- Two Big Side-by-Side Comparison Cards -->
+            <div class="quick-cards-grid">
+              <!-- Card 1: Existing Track Metadata -->
+              <div class="quick-card current-track-card">
+                <div class="quick-card-badge current-badge">Current File</div>
+                <div class="quick-art-wrapper">
+                  <img id="quickCurArt" src="" alt="Current Art" class="quick-art-img">
+                  <div id="quickCurArtPlaceholder" class="quick-art-placeholder">
+                    <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5">
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                      <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                      <polyline points="21 15 16 10 5 21"></polyline>
+                    </svg>
+                    <span>No Cover</span>
+                  </div>
+                </div>
+
+                <div class="quick-meta-list">
+                  <div class="quick-field">
+                    <span class="field-label">Title:</span>
+                    <span id="quickCurTitle" class="field-val highlight">Unknown Title</span>
+                  </div>
+                  <div class="quick-field">
+                    <span class="field-label">Artist:</span>
+                    <span id="quickCurArtist" class="field-val">Unknown Artist</span>
+                  </div>
+                  <div class="quick-field">
+                    <span class="field-label">Album:</span>
+                    <span id="quickCurAlbum" class="field-val">-</span>
+                  </div>
+                  <div class="quick-field-row">
+                    <div class="quick-field">
+                      <span class="field-label">Year:</span>
+                      <span id="quickCurYear" class="field-val">-</span>
+                    </div>
+                    <div class="quick-field">
+                      <span class="field-label">Genre:</span>
+                      <span id="quickCurGenre" class="field-val">-</span>
+                    </div>
+                  </div>
+                  <div class="quick-field-row">
+                    <div class="quick-field">
+                      <span class="field-label">Track:</span>
+                      <span id="quickCurTrack" class="field-val">-</span>
+                    </div>
+                    <div class="quick-field">
+                      <span class="field-label">File:</span>
+                      <span id="quickCurFilename" class="field-val filename-val" title="file.mp3">file.mp3</span>
+                    </div>
+                  </div>
+                  <div class="quick-lyrics-box">
+                    <div class="quick-lyrics-header">
+                      <span class="field-label">Lyrics:</span>
+                      <span id="quickCurLyricsBadge" class="lyrics-mini-badge">None</span>
+                    </div>
+                    <div id="quickCurLyricsText" class="quick-lyrics-content">No embedded lyrics</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Card 2: Online Matched Metadata -->
+              <div class="quick-card match-track-card" id="quickMatchCard">
+                <div class="quick-card-badge match-badge" id="quickMatchBadge">Online Match</div>
+                <div class="quick-art-wrapper">
+                  <img id="quickMatchArt" src="" alt="Matched Art" class="quick-art-img">
+                  <div id="quickMatchArtPlaceholder" class="quick-art-placeholder">
+                    <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <line x1="12" y1="8" x2="12" y2="12"></line>
+                      <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    <span id="quickMatchArtText">Searching or No Match</span>
+                  </div>
+                </div>
+
+                <div class="quick-meta-list">
+                  <div class="quick-field">
+                    <span class="field-label">Title:</span>
+                    <span id="quickMatchTitle" class="field-val highlight online">-</span>
+                  </div>
+                  <div class="quick-field">
+                    <span class="field-label">Artist:</span>
+                    <span id="quickMatchArtist" class="field-val online">-</span>
+                  </div>
+                  <div class="quick-field">
+                    <span class="field-label">Album:</span>
+                    <span id="quickMatchAlbum" class="field-val">-</span>
+                  </div>
+                  <div class="quick-field-row">
+                    <div class="quick-field">
+                      <span class="field-label">Year:</span>
+                      <span id="quickMatchYear" class="field-val">-</span>
+                    </div>
+                    <div class="quick-field">
+                      <span class="field-label">Genre:</span>
+                      <span id="quickMatchGenre" class="field-val">-</span>
+                    </div>
+                  </div>
+                  <div class="quick-field-row">
+                    <div class="quick-field">
+                      <span class="field-label">Track:</span>
+                      <span id="quickMatchTrack" class="field-val">-</span>
+                    </div>
+                    <div class="quick-field">
+                      <span class="field-label">Source:</span>
+                      <span id="quickMatchSource" class="field-val source-val">-</span>
+                    </div>
+                  </div>
+                  <div class="quick-lyrics-box">
+                    <div class="quick-lyrics-header">
+                      <span class="field-label">Lyrics:</span>
+                      <span id="quickMatchLyricsBadge" class="lyrics-mini-badge">None</span>
+                    </div>
+                    <div id="quickMatchLyricsText" class="quick-lyrics-content">No online lyrics found</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Quick Action Bar: Reject & Confirm -->
+            <div class="quick-actions-bar">
+              <div class="quick-options">
+                <label class="checkbox-label" title="Toggle Embed Artwork (C)">
+                  <input type="checkbox" id="quickEmbedArtCheck" checked>
+                  <span>Embed Online Cover Art</span>
+                  <kbd class="chip-key-inline">C</kbd>
+                </label>
+                <label class="checkbox-label" title="Toggle Auto-Rename (T)">
+                  <input type="checkbox" id="quickAutoRenameCheck" checked>
+                  <span>Auto-Rename (Artist - Title)</span>
+                  <kbd class="chip-key-inline">T</kbd>
+                </label>
+              </div>
+
+              <div class="quick-buttons-row">
+                <button id="quickPrevBtn" class="btn btn-secondary quick-btn-nav" title="Previous Track (P or ←)">
+                  <kbd class="btn-kbd">P</kbd>
+                  <span>← Prev</span>
+                </button>
+                <button id="quickSkipBtn" class="btn btn-danger-soft quick-btn-skip" title="Skip without changes (Space)">
+                  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                  <span>Skip</span>
+                  <kbd class="btn-kbd">Space</kbd>
+                </button>
+                <button id="quickConfirmBtn" class="btn btn-success quick-btn-confirm" title="Confirm & Apply Tags (Enter)">
+                  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="3">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                  <span>Confirm & Next</span>
+                  <kbd class="btn-kbd btn-kbd-success">Enter ↵</kbd>
+                </button>
+              </div>
+            </div>
+
+            <!-- Quick Keyboard Shortcuts Guide Footer -->
+            <div class="quick-shortcuts-hint">
+              <span class="hint-item"><kbd>A</kbd> Apple (Default)</span>
+              <span class="hint-item"><kbd>S</kbd> Shazam</span>
+              <span class="hint-item"><kbd>D</kbd> Deezer</span>
+              <span class="hint-item"><kbd>F</kbd> MusicBrainz</span>
+              <span class="hint-item"><kbd>W</kbd> All Sources</span>
+              <span class="hint-separator">•</span>
+              <span class="hint-item"><kbd>Enter</kbd> Confirm & Next</span>
+              <span class="hint-item"><kbd>Space</kbd> Skip</span>
+              <span class="hint-item"><kbd>P / N</kbd> Prev / Next</span>
+              <span class="hint-item"><kbd>R</kbd> Re-Search</span>
+              <span class="hint-item"><kbd>C / T</kbd> Cover / Rename</span>
+            </div>
+          </div>
+
+          <!-- ================= ADVANCED MODE VIEW ================= -->
+          <div id="advancedModeView" class="advanced-mode-container hidden">
+          <!-- Hero & Search Row: Track Info Left, Search Toolbar Right -->
+          <div class="track-header-grid">
+            <div class="track-hero">
+              <div class="current-art-wrap">
+                <img id="currentCoverImg" src="" alt="Embedded Art" class="current-art">
+                <div id="noArtPlaceholder" class="no-art-placeholder">
+                  <svg viewBox="0 0 24 24" width="44" height="44" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                    <polyline points="21 15 16 10 5 21"></polyline>
+                  </svg>
+                  <span>No Cover</span>
+                </div>
+              </div>
+
+              <div class="hero-meta">
+                <div class="file-badges">
+                  <span id="trackFormatBadge" class="badge">MP3</span>
+                  <span id="trackStatusBadge" class="badge badge-warning">Untagged</span>
+                  <span id="trackSizeBadge" class="badge badge-dim">8.4 MB</span>
+                </div>
+                <h2 id="displayTitle" class="hero-title">Track Title</h2>
+                <div id="displayArtist" class="hero-artist">Artist Name</div>
+                <div id="displayFilename" class="hero-filename">filename.mp3</div>
+              </div>
+            </div>
+
+            <!-- Search & Fetch Toolbar -->
+            <div class="search-toolbar">
+              <div class="search-input-group">
+                <span class="search-label">Query:</span>
+                <input type="text" id="queryInput" placeholder="Artist & Title or Apple Music URL (https://music.apple.com/...)...">
+              </div>
+
+              <div class="source-buttons">
+                <button class="source-btn active" data-source="all" title="Search all sources">All Sources</button>
+                <button class="source-btn" data-source="itunes" title="Search Apple Music / iTunes">🍎 Apple Music</button>
+                <button class="source-btn" data-source="deezer" title="Search Deezer Public API">🎵 Deezer</button>
+                <button class="source-btn" data-source="musicbrainz" title="Search MusicBrainz">🧠 MusicBrainz</button>
+              </div>
+
+              <div class="search-actions">
+                <button id="searchBtn" class="btn btn-secondary">
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                  </svg>
+                  <span>Search</span>
+                </button>
+
+                <div class="shazam-btn-group">
+                  <button id="shazamBtn" class="btn btn-shazam" title="Recognize track by acoustic audio fingerprint (Shazam)">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 14.5c0 .83-.67 1.5-1.5 1.5s-1.5-.67-1.5-1.5.67-1.5 1.5-1.5 1.5.67 1.5 1.5zm1.07-7.75l-.9.92C12.45 10.42 12 10.9 12 12h-2c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/>
+                    </svg>
+                    <span id="shazamBtnLabel">Identify Audio (Shazam)</span>
+                  </button>
+                  <button id="shazamModeBtn" class="btn btn-shazam-mode" title="Toggle Shazam Mode (Fast vs Deep Scan)">
+                    <span id="shazamModeBadge" class="mode-badge">Fast</span>
+                    <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                  </button>
+                  <div id="shazamModeMenu" class="shazam-mode-menu hidden">
+                    <div class="mode-item active" data-mode="normal">
+                      <div class="mode-title">⚡ Fast Scan (Normal)</div>
+                      <div class="mode-desc">Quick acoustic fingerprint on default track start</div>
+                    </div>
+                    <div class="mode-item" data-mode="deep">
+                      <div class="mode-title">🔬 Deep Scan (Multi-Segment)</div>
+                      <div class="mode-desc">High-power multi-point scan (ideal for intros, remixes & podcasts)</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Candidate Search Results Slider / Cards -->
+          <div class="candidates-container">
+            <div class="section-title">
+              <span>Online Match Candidates</span>
+              <span id="candidatesCount" class="count-tag">0 found</span>
+            </div>
+            <div class="candidates-grid" id="candidatesGrid">
+              <!-- Rendered dynamically -->
+            </div>
+          </div>
+
+          <!-- Detailed Comparison & Staging Columns -->
+          <div class="meta-grid">
+            <!-- Staged Tags to Apply -->
+            <div class="meta-card staged-card">
+              <div class="card-header">
+                <h3>Proposed Tags (Ready to Apply)</h3>
+                <span id="stagedSourceBadge" class="badge badge-accent">Selected Candidate</span>
+              </div>
+
+              <div class="form-grid">
+                <div class="form-group">
+                  <label>Title</label>
+                  <input type="text" id="stageTitle">
+                </div>
+                <div class="form-group">
+                  <label>Artist</label>
+                  <input type="text" id="stageArtist">
+                </div>
+                <div class="form-group">
+                  <label>Album</label>
+                  <input type="text" id="stageAlbum">
+                </div>
+                <div class="form-group row-group">
+                  <div class="sub-col">
+                    <label>Year</label>
+                    <input type="text" id="stageYear">
+                  </div>
+                  <div class="sub-col">
+                    <label>Track #</label>
+                    <input type="text" id="stageTrack">
+                  </div>
+                  <div class="sub-col">
+                    <label>Genre</label>
+                    <input type="text" id="stageGenre">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Artwork Preview & Full Control Hub -->
+              <div class="staged-art-section">
+                <div class="staged-art-box" id="stagedArtBox" title="Click or Drag & Drop image file here">
+                  <img id="stageCoverImg" src="" alt="Hi-Res Art" class="stage-art-preview">
+                  <div id="noStageArt" class="no-stage-art">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" style="margin-bottom: 4px; opacity: 0.7;">
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                      <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                      <polyline points="21 15 16 10 5 21"></polyline>
+                    </svg>
+                    <span>Drop / Upload</span>
+                  </div>
+                  <div class="staged-art-overlay">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                      <polyline points="17 8 12 3 7 8"></polyline>
+                      <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                    <span>Change</span>
+                  </div>
+                  <span id="stagedArtDim" class="staged-art-dim hidden"></span>
+                </div>
+                
+                <input type="file" id="coverFileInput" accept="image/jpeg,image/png,image/webp,image/avif,image/gif" style="display:none">
+
+                <div class="art-info">
+                  <div class="art-header-row">
+                    <div class="art-title">Cover Artwork</div>
+                    <div class="art-actions">
+                      <button type="button" id="uploadCoverBtn" class="btn btn-secondary btn-xs" title="Upload image from computer">
+                        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                          <polyline points="17 8 12 3 7 8"></polyline>
+                          <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                        <span>Upload</span>
+                      </button>
+                      <button type="button" id="urlCoverToggleBtn" class="btn btn-secondary btn-xs" title="Set cover from Image URL">
+                        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                          <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                        </svg>
+                        <span>URL</span>
+                      </button>
+                      <button type="button" id="useFileCoverBtn" class="btn btn-ghost btn-xs" title="Use current file's embedded cover">
+                        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2">
+                          <polyline points="1 4 1 10 7 10"></polyline>
+                          <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+                        </svg>
+                        <span>Track Cover</span>
+                      </button>
+                      <button type="button" id="clearCoverBtn" class="btn btn-ghost btn-xs btn-clear-art" title="Clear / Remove artwork">
+                        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2">
+                          <line x1="18" y1="6" x2="6" y2="18"></line>
+                          <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                        <span>Clear</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Expandable URL Drawer -->
+                  <div id="coverUrlDrawer" class="cover-url-drawer hidden">
+                    <div class="cover-url-input-wrap">
+                      <input type="url" id="customCoverUrlInput" placeholder="Paste image URL (https://...)" class="cover-url-input">
+                      <button type="button" id="applyCoverUrlBtn" class="btn btn-primary btn-xs">Load</button>
+                      <button type="button" id="cancelCoverUrlBtn" class="btn btn-ghost btn-xs">✕</button>
+                    </div>
+                  </div>
+
+                  <div id="artUrlText" class="art-sub">No artwork selected • Upload, paste URL, or drag & drop</div>
+                  
+                  <div class="art-options-row">
+                    <label class="checkbox-label">
+                      <input type="checkbox" id="embedArtCheck" checked>
+                      <span>Embed Artwork into File</span>
+                    </label>
+                    <label class="checkbox-label">
+                      <input type="checkbox" id="autoRenameCheck" checked>
+                      <span>Auto-Rename file to: <code>Artist - Title.ext</code></span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Lyrics Preview & Editor Drawer -->
+            <div class="meta-card lyrics-card">
+              <div class="card-header">
+                <div class="lyrics-header-left">
+                  <h3>Lyrics Preview</h3>
+                  <span id="lyricsSourceBadge" class="badge badge-dim">Searching...</span>
+                </div>
+                <button id="refetchLyricsBtn" class="btn btn-ghost btn-xs">
+                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="23 4 23 10 17 10"></polyline>
+                    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                  </svg>
+                  <span>Re-fetch</span>
+                </button>
+              </div>
+
+              <div class="lyrics-editor-wrap">
+                <textarea id="lyricsEditor" placeholder="No lyrics found. You can paste or type lyrics here to embed..."></textarea>
+              </div>
+
+              <div class="lyrics-footer">
+                <span id="lyricsStats">0 lines</span>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="embedLyricsCheck" checked>
+                  <span>Embed Lyrics into File</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Action Bar (Apply / Skip / Nav) -->
+          <div class="action-bar">
+            <div class="keyboard-hints">
+              <span>Shortcuts: <b>Enter</b>: Apply & Next | <b>Space</b>: Skip | <b>J/K</b>: Prev/Next</span>
+            </div>
+            <div class="action-buttons">
+              <button id="prevBtn" class="btn btn-secondary">← Previous</button>
+              <button id="skipBtn" class="btn btn-secondary">Skip (Space)</button>
+              <button id="applyBtn" class="btn btn-success">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                <span>Apply Tags & Next (Enter)</span>
+              </button>
+            </div>
+          </div>
+          </div>
+
+        </div>
+
+        <!-- Initial Placeholder when no track is selected -->
+        <div id="inspectorPlaceholder" class="inspector-placeholder">
+          <div class="placeholder-icon">
+            <svg viewBox="0 0 24 24" width="56" height="56" fill="none" stroke="currentColor" stroke-width="1.2">
+              <path d="M9 18V5l12-2v13"></path>
+              <circle cx="6" cy="18" r="3"></circle>
+              <circle cx="18" cy="16" r="3"></circle>
+            </svg>
+          </div>
+          <h2>Select a Track to Begin</h2>
+          <p>Scan your music folder above, click any track to preview its metadata, fetch tags from iTunes/Deezer/MusicBrainz, check lyrics, and save.</p>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Batch Recognition & Preview Modal -->
+  <div id="batchModal" class="modal-overlay hidden">
+    <div class="modal-container">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <span class="modal-badge">BATCH</span>
+          <h2>Batch Auto-Tagger Studio</h2>
+        </div>
+        <button id="closeBatchModalBtn" class="btn-close" title="Close modal">✕</button>
+      </div>
+
+      <!-- Batch Control Toolbar -->
+      <div class="batch-toolbar">
+        <div class="batch-control-group">
+          <label>Detection Method:</label>
+          <select id="batchMethodSelect" class="batch-select">
+            <option value="shazam">⚡ Shazam (Fast Fingerprint)</option>
+            <option value="shazam_deep">🔬 Shazam (Deep Multi-Segment Scan)</option>
+            <option value="all">🔍 Auto-Search (All Sources: Apple/Deezer/MB)</option>
+            <option value="itunes">🍎 Apple Music / iTunes</option>
+            <option value="deezer">🎵 Deezer</option>
+            <option value="musicbrainz">🧠 MusicBrainz</option>
+          </select>
+        </div>
+
+        <div class="batch-control-group">
+          <label>Target Scope:</label>
+          <select id="batchScopeSelect" class="batch-select">
+            <option value="untagged" selected>Only Untagged Tracks</option>
+            <option value="all">All Tracks in Folder</option>
+          </select>
+        </div>
+
+        <div class="batch-control-group batch-size-group">
+          <label>Batch Size (N):</label>
+          <div class="batch-n-controls">
+            <input type="number" id="batchNInput" min="1" max="100" value="10" class="batch-input-num">
+            <div class="n-preset-btns">
+              <button class="btn-preset active" data-n="10">10</button>
+              <button class="btn-preset" data-n="25">25</button>
+              <button class="btn-preset" data-n="50">50</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="batch-control-group">
+          <label>Concurrency:</label>
+          <select id="batchConcurrencySelect" class="batch-select" title="Number of tracks to process in parallel">
+            <option value="1">1 at a time (Sequential)</option>
+            <option value="2">2 Parallel</option>
+            <option value="3" selected>3 Parallel (Recommended)</option>
+            <option value="5">5 Parallel (Fast)</option>
+          </select>
+        </div>
+
+        <div class="batch-actions-row">
+          <button id="startBatchNBtn" class="btn btn-primary">
+            <span>⚡ Process Next <b>10</b></span>
+          </button>
+          <button id="startBatchAllBtn" class="btn btn-secondary">
+            <span>⚡ Process All</span>
+          </button>
+          <button id="stopBatchBtn" class="btn btn-danger hidden">
+            <span>■ Stop</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Batch Live Progress Bar -->
+      <div id="batchProgressWrap" class="batch-progress-wrap hidden">
+        <div class="progress-info">
+          <span id="batchProgressText" class="progress-status-text">Scanning tracks...</span>
+          <span id="batchProgressStats" class="progress-stats-pill">0 / 0</span>
+        </div>
+        <div class="progress-bar-bg">
+          <div id="batchProgressBar" class="progress-bar-fill" style="width: 0%"></div>
+        </div>
+      </div>
+
+      <!-- Batch Results Preview Cards Grid -->
+      <div class="batch-table-container">
+        <div class="batch-table-toolbar">
+          <div class="table-stats">
+            <span id="batchFoundCount" class="badge badge-success">0 Matched</span>
+            <span id="batchFailedCount" class="badge badge-dim">0 Failed</span>
+            <span id="batchTotalCount" class="badge badge-accent">0 in Queue</span>
+          </div>
+          <div class="table-quick-actions">
+            <button id="selectAllBatchBtn" class="btn btn-ghost btn-xs">Select All</button>
+            <button id="deselectAllBatchBtn" class="btn btn-ghost btn-xs">Deselect All</button>
+          </div>
+        </div>
+
+        <div class="table-scroll-wrap">
+          <div id="batchCardsGrid" class="batch-cards-grid">
+            <div class="empty-batch-state">
+              <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M9 18V5l12-2v13"></path>
+                <circle cx="6" cy="18" r="3"></circle>
+                <circle cx="18" cy="16" r="3"></circle>
+              </svg>
+              <p>Select method and click "Process Next N" or "Process All" to start recognition.</p>
+              <span>Detected songs will appear here as rich interactive cards</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Batch Modal Footer -->
+      <div class="modal-footer">
+        <div class="modal-options">
+          <label class="checkbox-label">
+            <input type="checkbox" id="batchEmbedArtCheck" checked>
+            <span>Embed Cover Art</span>
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" id="batchAutoRenameCheck" checked>
+            <span>Auto-Rename to <code>Artist - Title</code></span>
+          </label>
+        </div>
+
+        <div class="modal-apply-buttons">
+          <button id="batchApplySelectedBtn" class="btn btn-success" disabled>
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span>Apply Selected (<span id="batchSelectedCount">0</span>)</span>
+          </button>
+          <button id="batchApplyAllBtn" class="btn btn-primary" disabled>
+            <span>Apply All Matched</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notification Toast -->
+  <div id="toast" class="toast"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,33 @@
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments
+.venv/
+env/
+venv/
+.env
+
+# Runtime data & logs
+data/
+*.pid
+*.log
+
+# Cache & temporary files
+music_cache/
+.DS_Store
+Thumbs.db
+
+# Audio / Video media files for testing
+*.mp3
+*.flac
+*.m4a
+*.wav
+*.ogg
+*.opus
+*.mp4
+*.mkv
+*.webm
+*.avi
+*.lrc
+

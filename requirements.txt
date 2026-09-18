@@ -1,0 +1,6 @@
+mutagen>=1.48.1
+requests>=2.34.2
+urllib3>=2.8.0
+pillow>=12.3.0
+shazamio>=0.8.1
+beautifulsoup4>=4.15.0
