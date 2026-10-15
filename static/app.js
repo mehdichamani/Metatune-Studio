@@ -174,6 +174,15 @@ const elements = {
   batchApplySelectedBtn: document.getElementById("batchApplySelectedBtn"),
   batchApplyAllBtn: document.getElementById("batchApplyAllBtn"),
   batchSelectedCount: document.getElementById("batchSelectedCount"),
+
+  // Responsive & Audio Studio elements
+  mobileNavBar: document.getElementById("mobileNavBar"),
+  mobileTabQueue: document.getElementById("mobileTabQueue"),
+  mobileTabInspector: document.getElementById("mobileTabInspector"),
+  mobileQueueBadge: document.getElementById("mobileQueueBadge"),
+  sidebarQueue: document.getElementById("sidebarQueue"),
+  inspectorArea: document.getElementById("inspectorArea"),
+  playerEq: document.getElementById("playerEq"),
 };
 
 // Initialize
@@ -320,7 +329,43 @@ function handleCoverFileUpload(file) {
   reader.readAsDataURL(file);
 }
 
+function switchMobileView(tab) {
+  if (!elements.mobileTabQueue || !elements.mobileTabInspector) return;
+  if (tab === "queue") {
+    elements.mobileTabQueue.classList.add("active");
+    elements.mobileTabInspector.classList.remove("active");
+    if (elements.sidebarQueue) elements.sidebarQueue.classList.remove("mobile-hidden");
+    if (elements.inspectorArea) elements.inspectorArea.classList.add("mobile-hidden");
+  } else {
+    elements.mobileTabInspector.classList.add("active");
+    elements.mobileTabQueue.classList.remove("active");
+    if (elements.sidebarQueue) elements.sidebarQueue.classList.add("mobile-hidden");
+    if (elements.inspectorArea) elements.inspectorArea.classList.remove("mobile-hidden");
+  }
+}
+
 function setupEventListeners() {
+  // Mobile navigation tabs
+  if (elements.mobileTabQueue) {
+    elements.mobileTabQueue.addEventListener("click", () => switchMobileView("queue"));
+  }
+  if (elements.mobileTabInspector) {
+    elements.mobileTabInspector.addEventListener("click", () => switchMobileView("inspector"));
+  }
+
+  // Audio Equalizer Visualizer reactive to audio player
+  if (elements.audioPlayer && elements.playerEq) {
+    elements.audioPlayer.addEventListener("play", () => {
+      elements.playerEq.classList.add("playing");
+    });
+    elements.audioPlayer.addEventListener("pause", () => {
+      elements.playerEq.classList.remove("playing");
+    });
+    elements.audioPlayer.addEventListener("ended", () => {
+      elements.playerEq.classList.remove("playing");
+    });
+  }
+
   elements.scanBtn.addEventListener("click", () => {
     const dir = elements.dirInput.value.trim() || ".";
     state.currentDir = dir;
@@ -825,6 +870,9 @@ async function scanDirectory(path) {
     state.filteredTracks = [...state.tracks];
     renderTrackList();
     elements.statText.textContent = `${state.tracks.length} tracks`;
+    if (elements.mobileQueueBadge) {
+      elements.mobileQueueBadge.textContent = state.tracks.length;
+    }
 
     if (state.tracks.length > 0) {
       // Find first untagged track or first track
@@ -909,6 +957,11 @@ async function selectTrack(index) {
   state.currentIndex = index;
   const track = state.tracks[index];
   state.currentTrack = track;
+
+  // On mobile screens, automatically shift to Studio Inspector when a track is tapped
+  if (window.innerWidth <= 768) {
+    switchMobileView("inspector");
+  }
 
   // Highlight in sidebar
   renderTrackList();

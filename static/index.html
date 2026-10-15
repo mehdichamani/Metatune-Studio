@@ -4,9 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Metatune Studio</title>
+  <meta name="theme-color" content="#08090d">
+  <meta name="description" content="Metatune Studio - Professional Web-based Music Auto-Tagger, Metadata Fetcher, and Batch Audio Organizer">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -15,7 +17,7 @@
     <header class="navbar">
       <div class="brand">
         <div class="brand-logo">
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M9 18V5l12-2v13"></path>
             <circle cx="6" cy="18" r="3"></circle>
             <circle cx="18" cy="16" r="3"></circle>
@@ -24,6 +26,12 @@
         <div class="brand-title">
           <span class="brand-name">Metatune</span>
           <span class="brand-badge">STUDIO</span>
+        </div>
+        <div class="brand-eq-visualizer" title="Studio Engine Active">
+          <span class="eq-vbar"></span>
+          <span class="eq-vbar"></span>
+          <span class="eq-vbar"></span>
+          <span class="eq-vbar"></span>
         </div>
       </div>
 
@@ -58,10 +66,34 @@
       </div>
     </header>
 
+    <!-- Mobile Segmented Workspace Navigation -->
+    <nav class="mobile-nav-bar" id="mobileNavBar" aria-label="Mobile View Switcher">
+      <button id="mobileTabQueue" class="mobile-nav-btn active" type="button">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="8" y1="6" x2="21" y2="6"></line>
+          <line x1="8" y1="12" x2="21" y2="12"></line>
+          <line x1="8" y1="18" x2="21" y2="18"></line>
+          <line x1="3" y1="6" x2="3.01" y2="6"></line>
+          <line x1="3" y1="12" x2="3.01" y2="12"></line>
+          <line x1="3" y1="18" x2="3.01" y2="18"></line>
+        </svg>
+        <span>Track Queue</span>
+        <span class="mobile-badge" id="mobileQueueBadge">0</span>
+      </button>
+      <button id="mobileTabInspector" class="mobile-nav-btn" type="button">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 18V5l12-2v13"></path>
+          <circle cx="6" cy="18" r="3"></circle>
+          <circle cx="18" cy="16" r="3"></circle>
+        </svg>
+        <span>Studio Inspector</span>
+      </button>
+    </nav>
+
     <!-- Main Workspace Layout -->
-    <main class="workspace">
+    <main class="workspace" id="mainWorkspace">
       <!-- Left Sidebar: Track Queue -->
-      <aside class="sidebar">
+      <aside class="sidebar" id="sidebarQueue">
         <div class="sidebar-header">
           <h3>Queue</h3>
           <div class="filter-box">
@@ -85,12 +117,21 @@
       </aside>
 
       <!-- Center & Right: Track Inspector & Metadata Fetcher -->
-      <section class="inspector-area">
+      <section class="inspector-area" id="inspectorArea">
         <div id="inspectorContent" class="inspector-content hidden">
           
           <!-- Top Standalone Player Card -->
           <div class="player-top-card">
-            <audio id="audioPlayer" controls preload="none"></audio>
+            <div class="player-audio-section">
+              <div class="player-eq-badge" id="playerEq" title="Studio Audio Engine">
+                <span class="eq-pbar"></span>
+                <span class="eq-pbar"></span>
+                <span class="eq-pbar"></span>
+                <span class="eq-pbar"></span>
+                <span class="eq-pbar"></span>
+              </div>
+              <audio id="audioPlayer" controls preload="none"></audio>
+            </div>
             <!-- Single Inspector View Mode Switcher -->
             <div class="inspector-mode-tabs">
               <button id="quickModeTabBtn" class="mode-tab-btn active" data-mode="quick">
