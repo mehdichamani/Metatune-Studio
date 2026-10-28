@@ -73,19 +73,25 @@ class TaggerHTTPHandler(BaseHTTPRequestHandler):
             self.send_error(404, "Static file not found")
             return
         content = target.read_bytes()
-        self.send_response(200)
-        self.send_header("Content-Type", content_type)
-        self.send_header("Content-Length", str(len(content)))
-        self.end_headers()
-        self.wfile.write(content)
+        try:
+            self.send_response(200)
+            self.send_header("Content-Type", content_type)
+            self.send_header("Content-Length", str(len(content)))
+            self.end_headers()
+            self.wfile.write(content)
+        except (BrokenPipeError, ConnectionResetError):
+            pass
 
     def send_json(self, data: Any, code: int = 200):
         body = json.dumps(data, ensure_ascii=False).encode("utf-8")
-        self.send_response(code)
-        self.send_header("Content-Type", "application/json; charset=utf-8")
-        self.send_header("Content-Length", str(len(body)))
-        self.end_headers()
-        self.wfile.write(body)
+        try:
+            self.send_response(code)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+        except (BrokenPipeError, ConnectionResetError):
+            pass
 
     def handle_api_scan(self, params: Dict[str, Any]):
         dir_path_str = params.get("path", ["."])[0]

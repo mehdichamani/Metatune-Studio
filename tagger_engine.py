@@ -155,8 +155,27 @@ def read_file_metadata(file_path: Path) -> Dict[str, Any]:
             meta["year"] = audio.get("DATE", [""])[0]
             meta["genre"] = audio.get("GENRE", [""])[0]
             meta["trackNumber"] = audio.get("TRACKNUMBER", [""])[0]
-            meta["lyrics"] = audio.get("LYRICS", [""])[0]
+            meta["lyrics"] = audio.get("LYRICS", [""])[0] or audio.get("UNSYNCEDLYRICS", [""])[0] or audio.get("SYNOPSIS", [""])[0]
             meta["isTagged"] = TAG_KEY in audio and TAG_VAL in audio[TAG_KEY]
+
+            # Extract embedded cover art if present (METADATA_BLOCK_PICTURE or COVERART)
+            pics = audio.get("METADATA_BLOCK_PICTURE", [])
+            if pics:
+                try:
+                    pic = Picture(base64.b64decode(pics[0]))
+                    mime_type = pic.mime or "image/jpeg"
+                    meta["hasCover"] = True
+                    meta["coverBase64"] = f"data:{mime_type};base64,{base64.b64encode(pic.data).decode('utf-8')}"
+                except Exception:
+                    pass
+            elif "COVERART" in audio and audio["COVERART"]:
+                try:
+                    cover_raw = base64.b64decode(audio["COVERART"][0])
+                    mime_type = "image/png" if cover_raw.startswith(b"\x89PNG\r\n\x1a\n") else "image/jpeg"
+                    meta["hasCover"] = True
+                    meta["coverBase64"] = f"data:{mime_type};base64,{base64.b64encode(cover_raw).decode('utf-8')}"
+                except Exception:
+                    pass
 
     except Exception:
         pass
@@ -734,6 +753,18 @@ def apply_tags_to_file(
                 audio["LYRICS"] = [lyrics]
 
             audio[TAG_KEY] = [TAG_VAL]
+
+            if artwork_bytes:
+                is_png = artwork_bytes.startswith(b"\x89PNG\r\n\x1a\n")
+                mime_type = "image/png" if is_png else "image/jpeg"
+                pic = Picture()
+                pic.type = 3
+                pic.mime = mime_type
+                pic.desc = "Front Cover"
+                pic.data = artwork_bytes
+                pic_data = base64.b64encode(pic.write()).decode("ascii")
+                audio["METADATA_BLOCK_PICTURE"] = [pic_data]
+
             audio.save()
 
     except Exception as e:
